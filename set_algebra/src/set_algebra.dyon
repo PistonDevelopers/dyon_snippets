@@ -1,0 +1,95 @@
+ns set_algebra
+
+/*
+Boolean Algebra for Sets
+
+Performs operations on sorted indices.
+*/
+
+/// Set union of sorted indices.
+union(a: [f64], b: [f64]) = {
+    a_n := len(a)
+    b_n := len(b)
+    if a_n == 0 {return clone(b)}
+    else if b_n == 0 {return clone(a)}
+    a_i := some(0)
+    b_i := some(0)
+    res := []
+    loop {
+        if (a_i == none()) && (b_i == none()) {break}
+        if (a_i != none()) &&
+           ((b_i == none()) ||
+           (a[unwrap(a_i)] <= b[unwrap(b_i)])) {
+            i := unwrap(a_i)
+            if (i+1) >= a_n {
+                a_i = none()
+            } else {
+                a_i = some(i+1)
+            }
+            dup := if len(res) > 0 {res[len(res)-1] == a[i]} else {false}
+            if !dup {
+                push(mut res, a[i])
+            }
+        }
+        else {
+            i := unwrap(b_i)
+            if (i+1) >= b_n {
+                b_i = none()
+            } else {
+                b_i = some(i+1)
+            }
+            dup := if len(res) > 0 {res[len(res)-1] == b[i]} else {false}
+            if !dup {
+                push(mut res, b[i])
+            }
+        }
+    }
+    clone(res)
+}
+
+/// Set intersection of sorted indices.
+intersect(a: [f64], b: [f64]) = {
+    a_n := len(a)
+    b_n := len(b)
+    if (a_n == 0) || (b_n == 0) {return []}
+    a_i := 0
+    b_i := 0
+    res := []
+    loop {
+        if (a_i >= a_n) || (b_i >= b_n) {break}
+        if a[a_i] == b[b_i] {
+            push(mut res, a[a_i])
+            a_i += 1
+            b_i += 1
+            continue
+        }
+        if a[a_i] < b[b_i] {
+            a_i += 1
+        } else if a[a_i] > b[b_i] {
+            b_i += 1
+        }
+    }
+    clone(res)
+}
+
+/// Set exclusion of sorted indices.
+exclude(a: [f64], b: [f64]) = {
+    a_n := len(a)
+    b_n := len(b)
+    if a_n == 0 {return []}
+    if b_n == 0 {return clone(a)}
+    a_i := 0
+    b_i := 0
+    res := []
+    loop {
+        if a_i >= a_n {break}
+        if (b_n > a_i) && (a[a_i] == b[b_i]) {
+            a_i += 1
+            b_i += 1
+        } else {
+            push(mut res, a[a_i])
+            a_i += 1
+        }
+    }
+    clone(res)
+}

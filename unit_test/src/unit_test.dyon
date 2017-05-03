@@ -31,7 +31,8 @@ get_test_functions(module: any) = {
     sift i {
         if !string::starts_with(fs[i].name, "test_") {continue}
         if (fs[i].returns != "\\() -> bool") &&
-           (fs[i].returns != "\\() -> sec[bool]") {continue}
+           (fs[i].returns != "\\() -> sec[bool]") &&
+           (fs[i].returns != "\\() -> any") {continue}
         clone(fs[i].name)
     }
 }

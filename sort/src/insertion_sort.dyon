@@ -1,0 +1,15 @@
+ns sort
+
+/// Uses insertion sort with closure.
+/// Closure should return `true` when an item is less than another.
+fn insertion_sort(mut a: [any], lt: \(any, any) -> bool) {
+    for i [1, len(a)) {
+        j := i
+        loop {
+            if (j > 0) && \lt(a[j], a[j-1]) {
+                swap(mut a, j, j-1)
+                j -= 1
+            } else { break }
+        }
+    }
+}

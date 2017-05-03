@@ -1,0 +1,15 @@
+ns object
+
+/*
+Useful functions when working with objects.
+*/
+
+/// Get all unique values stored in a property.
+fn unique_values(items: [{}], key: str) -> [any] {
+    list := []
+    for i {
+        if any j {items[i][key] == list[j]} {continue}
+        push(mut list, items[i][key])
+    }
+    return clone(list)
+}

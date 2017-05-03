@@ -1,0 +1,17 @@
+use sort as sort
+
+test_1() = \() = {
+    a := [
+        {name: "John", age: 80},
+        {name: "Peter", age: 60},
+        {name: "Carla", age: 80},
+        {name: "Homer", age: 60},
+    ]
+    b := unique_values(a, "age")
+    sort::insertion_sort(mut b, \(a, b) = a < b)
+    b == [60, 80]
+}
+
+test_2() = \() = {
+    (1 + grab random()) > grab random()
+}

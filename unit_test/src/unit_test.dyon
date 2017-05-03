@@ -1,0 +1,36 @@
+ns unit_test
+
+/*
+Run unit tests on a module.
+
+A unit test must start with `test_` and return a closure `\() -> bool`.
+The closure should return `true` if the unit test succeeds and `false` otherwise.
+*/
+
+use string::{starts_with} as string
+
+/// Runs all tests in a module one by one.
+run_tests(module: any) = {
+    names := get_test_functions(module)
+    tests := sift i {call_ret(module, names[i], [])}
+    success := all i {\tests[i]()}
+    if success {
+        ok("All tests succeeded")
+    } else {
+        why := why(!success)
+        err(str(link {
+            "Test `"names[why[0]]"` did not succeed:\n"
+            str(tests[why[0]])
+        }))
+    }
+}
+
+/// Returns names of test functions in a module.
+get_test_functions(module: any) = {
+    fs := functions(module: module)
+    sift i {
+        if !string::starts_with(fs[i].name, "test_") {continue}
+        if fs[i].returns != "\\() -> bool" {continue}
+        clone(fs[i].name)
+    }
+}

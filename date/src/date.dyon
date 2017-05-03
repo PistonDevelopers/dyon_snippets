@@ -1,0 +1,24 @@
+ns date
+
+/// Creates a date.
+fn date__year_month_day(year: f64, month: f64, day: f64) -> Date [f64] {
+    return [clone(year), clone(month), clone(day)]
+}
+
+/// Formats a date into a link.
+date_format(date: Date [f64]) = link {date[0]"-"date[1]"-"date[2]}
+
+/// Computes the number of days between two dates.
+fn sub_days(a: Date [f64], b: Date [f64]) -> f64 {
+    leap_year := \(year: f64) = if (year%100)==0 {(year%400)==0}
+                                else {(year%4)==0}
+    return a[2]-b[2]+sum i [0, a[0]-b[0]+1) {
+        sum j [if i == 0 {b[1]-1} else {0},
+               if i == (a[0]-b[0]) {a[1]-1} else {12}) {
+            if j == 1 {29 + (if \leap_year(b[0]+i) {1} else {0})}
+            else if ((j%2)==0) && (j<7) {31}
+            else if ((j%2)==1) && (j>=7) {31}
+            else {30}
+        }
+    }
+}

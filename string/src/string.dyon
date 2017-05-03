@@ -1,0 +1,13 @@
+ns string
+
+/*
+Useful functions when working with strings.
+*/
+
+/// Returns true if string `a` starts with string `b`.
+starts_with(a: str, b: str) = {
+    ac := chars(a)
+    ab := chars(b)
+    if len(ac) < len(ab) {false}
+    else {true && all i len(ab) {ac[i] == ab[i]}}
+}

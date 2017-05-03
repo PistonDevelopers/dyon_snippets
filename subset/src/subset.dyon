@@ -1,0 +1,17 @@
+ns subset
+
+use sort as sort
+use search::{binary_search} as search
+
+/// Returns `true` keys of object `a` is a subset
+/// of the keys of object `b`.
+/// Returns `false` otherwise.
+obj_subset_of(a: {}, b: {}) =
+    subset_of(keys(a), keys(b), \(ak, bk) = ak < bk)
+
+/// Returns `true` if `a` is a subset of `b`.
+subset_of(a: [any], b: [any], lt: \(any, any) -> bool) = {
+    b := clone(b)
+    sort::insertion_sort(mut b, lt)
+    all i {is_ok(search::binary_search(b, a[i], lt))}
+}

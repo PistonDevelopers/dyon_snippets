@@ -1,0 +1,11 @@
+[package]
+name = "test_dyon_snippets"
+version = "0.1.0"
+authors = ["Sven Nilsen <bvssvni@gmail.com>"]
+
+[[bin]]
+name = "test_dyon_snippets"
+path = "src/main.rs"
+
+[dependencies]
+dyon = "0.24.3"

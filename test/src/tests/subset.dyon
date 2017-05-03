@@ -1,0 +1,13 @@
+use subset::{obj_subset_of, subset_of} as subset
+
+test_1() = \() = {
+    a := {x: 1, y: 2, z: 3}
+    b := {x: 2, y: 3}
+    subset::obj_subset_of(b, a)
+}
+
+test_2() = \() = {
+    a := [1, 2, 3]
+    b := [1, 2]
+    subset::subset_of(b, a, \(x, y) = x < y)
+}

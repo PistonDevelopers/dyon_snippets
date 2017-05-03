@@ -8,4 +8,4 @@ name = "test_dyon_snippets"
 path = "src/main.rs"
 
 [dependencies]
-dyon = "0.24.3"
+dyon = "0.24.4"

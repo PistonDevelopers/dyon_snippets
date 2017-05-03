@@ -1,7 +1,19 @@
 fn main() {
     date := unwrap(load("../date/src/date.dyon"))
     number := unwrap(load("../number/src/number.dyon"))
+    object := unwrap(load("../object/src/object.dyon"))
     binary_search := unwrap(load("../search/src/binary_search.dyon"))
     insertion_sort := unwrap(load("../sort/src/insertion_sort.dyon"))
     string := unwrap(load("../string/src/string.dyon"))
+    unit_test := unwrap(load(
+        source: "../unit_test/src/unit_test.dyon",
+        imports: [string]
+    ))
+
+    test_object := unwrap(load(
+        source: "src/tests/object.dyon",
+        imports: [object, insertion_sort]
+    ))
+
+    _ := unwrap(call_ret(unit_test, "run_tests", [test_object]))
 }

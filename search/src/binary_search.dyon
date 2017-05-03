@@ -1,0 +1,22 @@
+ns search
+
+/// Returns `ok(ind)` if index of item is found.
+/// Returns `err(ind)` of index to insert if not found.
+binary_search(arr: [any], key: any, lt: \(any, any) -> bool) = {
+    l := 0
+    r := len(arr)-1
+    m := floor((l+r)/2)
+    loop {
+        if l > r {return err(m)}
+        m = floor((l+r)/2)
+        if \lt(arr[m], key) {
+            l = m+1
+            continue
+        }
+        if \lt(key, arr[m]) {
+            r = m-1
+            continue
+        }
+        return ok(m)
+    }
+}

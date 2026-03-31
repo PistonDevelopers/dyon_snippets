@@ -1,0 +1,20 @@
+segment_lines(data: [vec4]) = {
+    res := []
+    seg := []
+    last := none()
+    for i {
+        if (i % 2) != 0 {continue}
+        if (some(data[i]) != last) && (len(seg) != 0) {
+            push(mut seg, unwrap(last))
+            push(mut res, seg)
+            seg = []
+        }
+        push(mut seg, data[i])
+        last = some(data[(i+1)])
+    }
+    if len(seg) != 0 {
+        push(mut seg, unwrap(last))
+        push(mut res, seg)
+    }
+    clone(res)
+}

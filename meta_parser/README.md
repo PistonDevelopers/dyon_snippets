@@ -2,6 +2,8 @@
 
 Generates standalone parsers (no dependencies) in Dyon using a [Piston-Meta](https://github.com/pistondevelopers/meta) document and a DSL document.
 
+[Self-Convert](./src/self-convert.txt)
+
 The DSL (Domain Specific Language) describes how to convert meta-data into Dyon data.
 
 Remember that Piston-Meta breaks up parsing into two steps:

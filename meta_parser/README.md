@@ -142,6 +142,9 @@ pub enum MetaData {
 
 The rules specify how to match against meta-data and output Dyon data.
 
+**IMPORTANT!** Remember to add a semicolon `;` at the end of each rule.
+If you get a strange error, then it is probably just a missing semicolon.
+
 #### Subrule
 
 A subrule is referenced by its name:
@@ -161,6 +164,16 @@ If meta-data generates a node name, you can specify it as a string after the nam
 ```text
 <name> := [<patterns>] => <code>;
 ```
+
+Here a pattern can be:
+
+- `<name>: bool` or `<name>: opt[bool]` (optional)
+- `<name>: f64` or `<name>: opt[f64]` (optional)
+- `<name>: str` or `<name>: opt[str]` (optional)
+- `<name> <- <subrule>` (see [Subrule](#subrule))
+
+The code to the right of `=>` is Dyon code.
+This code can depend on the variables bound by names.
 
 #### Select Rule
 

@@ -1,0 +1,464 @@
+fn gen_parser__meta_from_to(
+    syntax_file: str,
+    convert_file: str,
+    output_file: str
+) -> res {
+    generator := generator()?
+    syn := syntax(in: "meta_parser_syntax.txt", string: syntax())?
+    txt := load_string(file: convert_file)?
+    meta := meta(syntax: syn, in: convert_file, string: txt)?
+    data := call_ret(generator, "convert", [meta])?
+    syntax := load_string(file: syntax_file)?
+    code := to_code(syntax: syntax, meta: data)?
+    return save(string: str(code), file: output_file)
+}
+
+syntax() = "_seps:\".:;,[]{}()?!=<>\\\"\"\n\n1 , = [.w? \",\" .w?]\n\n2 expr = {.t!:\"code\" ...\";\"!:\"code\"}\n3 reserved = [!\"I\" !\"S\"]\n\n95 ref = [.._seps!:\"rule\" ?[.w? \":\" .t!:\"as\"]]\n96 type = {\n    \"bool\":\"bool\"\n    \"f64\":\"f64\"\n    \"str\":\"str\"\n    [\"opt\":\"opt\" .w? \"[\" .w? type .w? \"]\"]\n}\n97 field = [reserved .._seps!:\"name\" .w?\n            {[\":\" .w? type] [\"<-\" .w? ref]}]\n\n98 fields = [\"[\" .w? .s!.(, field:\"field\") .w? \"]\" .w?\n             \"=>\" .w? expr:\"expr\" \";\"]\n99 repeat = [\"repeat\" .w! ref .w? \";\"]\n100 select = [\"select\" .w? \"{\" .w? .s!.(, ref:\"ref\") .w? \"}\" .w? \";\"]\n\n150 rule = {fields:\"fields\" repeat:\"repeat\" select:\"select\"}\n200 decl = [.._seps!:\"name\" .w? \":=\" .w? rule:\"rule\" .w?]\n300 decls = .l(decl:\"decl\")\n1000 body = [.w? decls:\"rules\" .w?\n            \"--\" .r!(\"-\") .w? .._seps!:\"start\" .w?]\n2000 meta = [.w? \"meta\" .w? \"{\" .w?\n             body .w? \"}\" .w?]\n"
+generator() = module(
+    in: "meta_generator.dyon",
+    string: str(to_code(syntax: syntax(), meta: self_meta())?),
+    imports: [])
+
+self_meta() = {
+    start: "doc",
+    rules: [
+        {
+            expr: "str(\"f64\")",
+            fields: [{type: "bool", optional: false, name: "f64"}],
+            name: "f64"
+        },
+        {
+            expr: "str(\"str\")",
+            fields: [{type: "bool", optional: false, name: "str"}],
+            name: "str"
+        },
+        {
+            expr: "str(\"bool\")",
+            fields: [{type: "bool", optional: false, name: "bool"}],
+            name: "bool"
+        },
+        {
+            select: [
+                {as: none(), op: "ref", rule: "f64"},
+                {as: none(), op: "ref", rule: "str"},
+                {as: none(), op: "ref", rule: "bool"}
+            ],
+            name: "ty"
+        },
+        {
+            expr: "{op: \"type\", val: ty, optional: opt == some(true)}",
+            fields: [
+                {type: "bool", optional: true, name: "opt"},
+                {ref: {as: none(), rule: "ty"}, name: "ty"}
+            ],
+            name: "type"
+        },
+        {
+            expr: "{op: \"ref\", rule: rule, as: as}",
+            fields: [
+                {type: "str", optional: false, name: "rule"},
+                {type: "str", optional: true, name: "as"}
+            ],
+            name: "ref"
+        },
+        {
+            select: [
+                {as: none(), op: "ref", rule: "type"},
+                {as: none(), op: "ref", rule: "ref"}
+            ],
+            name: "type_or_ref"
+        },
+        {
+            expr: "if tr.op == \"type\" {
+                {name: name, type: tr.val, optional: tr.optional}
+            } else {
+                {name: name, ref: {rule: tr.rule, as: tr.as}}
+            }",
+            fields: [
+                {type: "str", optional: false, name: "name"},
+                {
+                    ref: {as: none(), rule: "type_or_ref"},
+                    name: "tr"
+                }
+            ],
+            name: "field"
+        },
+        {
+            repeat: {as: some("field"), rule: "field"},
+            name: "rep_fields"
+        },
+        {
+            expr: "code",
+            fields: [{type: "str", optional: false, name: "code"}],
+            name: "expr"
+        },
+        {
+            expr: "{op: \"fields\", fields: fs, expr: expr}",
+            fields: [
+                {
+                    ref: {as: none(), rule: "rep_fields"},
+                    name: "fs"
+                },
+                {
+                    ref: {as: some("expr"), rule: "expr"},
+                    name: "expr"
+                }
+            ],
+            name: "fields"
+        },
+        {
+            expr: "{op: \"repeat\", rule: ref.rule, as: ref.as}",
+            fields: [
+                {
+                    ref: {as: none(), rule: "ref"},
+                    name: "ref"
+                }
+            ],
+            name: "repeat"
+        },
+        {
+            repeat: {as: some("ref"), rule: "ref"},
+            name: "sel"
+        },
+        {
+            expr: "{op: \"select\", rules: sel}",
+            fields: [
+                {
+                    ref: {as: none(), rule: "sel"},
+                    name: "sel"
+                }
+            ],
+            name: "select"
+        },
+        {
+            select: [
+                {as: some("fields"), op: "ref", rule: "fields"},
+                {as: some("repeat"), op: "ref", rule: "repeat"},
+                {as: some("select"), op: "ref", rule: "select"}
+            ],
+            name: "rule"
+        },
+        {
+            expr: "if rule.op == \"fields\" {
+                {name: name, fields: rule.fields, expr: rule.expr}
+            } else if rule.op == \"repeat\" {
+                {name: name, repeat: {rule: rule.rule, as: rule.as}}
+            } else if rule.op == \"select\" {
+                {name: name, select: rule.rules}
+            }",
+            fields: [
+                {type: "str", optional: false, name: "name"},
+                {
+                    ref: {as: some("rule"), rule: "rule"},
+                    name: "rule"
+                }
+            ],
+            name: "decl"
+        },
+        {
+            repeat: {as: some("decl"), rule: "decl"},
+            name: "rules"
+        },
+        {
+            expr: "{rules: rules, start: start}",
+            fields: [
+                {
+                    ref: {as: some("rules"), rule: "rules"},
+                    name: "rules"
+                },
+                {type: "str", optional: false, name: "start"}
+            ],
+            name: "doc"
+        }
+    ]
+}
+
+fn to_code__syntax_meta(syntax: str, meta: {}) -> res[str] {
+    code := link {}
+
+    code += link {
+"fn read_type__data_index(data: [[]], index: f64) -> opt[[]] {\n"
+"    offset := 0\n"
+"    opt := read_bool(data: data, index: index, name: \"opt\")\n"
+"    opt := if opt == none() {\n"
+"            false\n"
+"        } else {\n"
+"            offset += 1\n"
+"            true\n"
+"        }\n"
+"    tbool := read_bool(data: data, index: index + offset, name: \"bool\")\n"
+"    if tbool != none() { return some([1 + offset, \"bool\", opt]) }\n"
+"    tf64 := read_bool(data: data, index: index + offset, name: \"f64\")\n"
+"    if tf64 != none() { return some([1 + offset, \"f64\", opt]) }\n"
+"    tstr := read_bool(data: data, index: index + offset, name: \"str\")\n"
+"    if tstr != none() { return some([1 + offset, \"str\", opt]) }\n"
+"    return none()\n"
+"}\n"
+"\n"
+"fn read_f64__data_index_name(data: [[]], index: f64, name: str) -> opt[[]] {\n"
+"    if index >= len(data) { return none() }\n"
+"    return if (data[index][2] == \"f64\") && (data[index][3] == name) {\n"
+"        some([1, data[index][4]])\n"
+"    } else {\n"
+"        none()\n"
+"    }\n"
+"}\n"
+"\n"
+"fn read_bool__data_index_name(data: [[]], index: f64, name: str) -> opt[[]] {\n"
+"    if index >= len(data) { return none() }\n"
+"    return if (data[index][2] == \"bool\") && (data[index][3] == name) {\n"
+"        some([1, data[index][4]])\n"
+"    } else {\n"
+"        none()\n"
+"    }\n"
+"}\n"
+"\n"
+"fn read_str__data_index_name(data: [[]], index: f64, name: str) -> opt[[]] {\n"
+"    if index >= len(data) { return none() }\n"
+"    return if (data[index][2] == \"str\") && (data[index][3] == name) {\n"
+"        some([1, data[index][4]])\n"
+"    } else {\n"
+"        none()\n"
+"    }\n"
+"}\n"
+"\n"
+"fn start_node__data_index_name(data: [[]], index: f64, name: str) -> opt[f64] {\n"
+"    if index >= len(data) { return none() }\n"
+"    return if (data[index][2] == \"start\") && (data[index][3] == name) {\n"
+"        some(1)\n"
+"    } else {\n"
+"        none()\n"
+"    }\n"
+"}\n"
+"\n"
+"fn end_node__data_index_name(data: [[]], index: f64, name: str) -> opt[f64] {\n"
+"    if index >= len(data) { return none() }\n"
+"    return if (data[index][2] == \"end\") && (data[index][3] == name) {\n"
+"        some(1)\n"
+"    } else {\n"
+"        none()\n"
+"    }\n"
+"}\n"
+"\n"
+"fn ignore__data_index(data: [[]], index: f64) -> f64 {\n"
+"    level := 0\n"
+"    i := index\n"
+"    for i [index, len(data)) {\n"
+"        if data[i][2] == \"start\" {\n"
+"            level += 1\n"
+"        } else if data[i][2] == \"end\" {\n"
+"            if level == 0 { return i - index }\n"
+"            level -= 1\n"
+"        }\n"
+"    }\n"
+"    return len(data) - index\n"
+"}\n"
+"\n"
+    }
+
+    for i {
+        r := meta.rules[i]
+        name := r.name
+        code += link {
+            "fn __"name"__data_index_name(data: [[]], index: f64, name: opt[str]) -> res {\n"
+            "    S := index\n"
+            "    I := index\n"
+            "    if name != none() {\n"
+            "        node := start_node(data: data, index: I, name: unwrap(name))\n"
+            "        if node == none() { return err(\"Expected `\" + unwrap(name) + \"`\")? }\n"
+            "        I += unwrap(node)\n"
+            "    }\n"
+        }
+
+        if has(r, "fields") {
+            fields := r.fields
+            gen_fields := sift i {
+                [
+                    fields[i].name,
+                    if has(fields[i], "type") {some(fields[i].type)} else {none()},
+                    if has(fields[i], "ref") {some(fields[i].ref.rule)} else {none()},
+                    if has(fields[i], "ref") {fields[i].ref.as} else {none()},
+                    if has(fields[i], "optional") {fields[i].optional} else {false}
+                ]
+            }
+            for i len(gen_fields) {
+                code += link {"    _"gen_fields[i][0]" := none()\n"}
+            }
+            code += link {
+                "    loop {\n"
+                "        if I >= len(data) { break }\n"
+                "        if "
+            }
+            for i len(gen_fields) {
+                code += link {"(_"gen_fields[i][0]" != none())"}
+                if (i + 1) != len(gen_fields) {
+                    code += " &&\n           "
+                }
+            }
+            code += " { break }\n"
+            for i len(gen_fields) {
+                name := gen_fields[i][0]
+                ty := gen_fields[i][1]
+                rule := gen_fields[i][2]
+                as := gen_fields[i][3]
+                code += link {"        i_"name" := "}
+                if rule != none() {
+                    code += link {"__"unwrap(rule)"(data: data, index: I, name: "}
+                    if as != none() {
+                        code += link {"some(\""unwrap(as)"\"))\n"}
+                    } else {
+                        code += "none())\n"
+                    }
+                } else {
+                    code += link {"read_"unwrap(ty)
+                        "(data: data, index: I, name: \""name"\")\n"}
+                }
+                if rule != none() {
+                    code += link {"        if !is_err(i_"name") {\n"}
+                } else {
+                    code += link {"        if i_"name" != none() {\n"}
+                }
+                code += link {
+                    "            i_"name" := unwrap(i_"name")\n"
+                    "            if i_"name"[0] > 0 {\n"
+                    "                I += i_"name"[0]\n"
+                    "                _"name" = some(i_"name"[1])\n"
+                    "                continue\n"
+                    "            }\n"
+                    "        }\n"
+                }
+            }
+            code += link {
+                "        if name != none() {\n"
+                "            I += ignore(data: data, index: I)\n"
+                "        }\n"
+                "        break\n"
+                "    }\n"
+                "    if name != none() {\n"
+                "        I += end_node(data: data, index: I, name: unwrap(name))?\n"
+                "    }\n"
+            }
+            for i len(gen_fields) {
+                name := gen_fields[i][0]
+                opt := gen_fields[i][4]
+                if opt {
+                    code += link {
+                        "    "name" := _"name"\n"
+                    }
+                } else {
+                    code += link {
+                        "    "name" := if _"name" != none() {\n"
+                        "        unwrap(_"name")\n"
+                        "    } else {\n"
+                        "        return err(\"Could not find `"name"`\")?\n"
+                        "    }\n"
+                    }
+                }
+            }
+            code += link {"    return ok([I - S, "r.expr"])\n"}
+        }
+
+        if has(r, "repeat") {
+            rule := r.repeat.rule
+            code += link {
+                "    arr := []\n"
+                "    loop {\n"
+            }
+            if r.repeat.as == none() {
+                name := r.repeat.rule
+                code += link {
+                    "        _"name" := __"rule"(data: data, index: I, name: none())\n"
+                    "        if is_err(_"name") {\n"
+                    "            break\n"
+                    "        } else {\n"
+                    "            i_"name" := unwrap(_"name")\n"
+                    "            I += i_"name"[0]\n"
+                    "            push(mut arr, i_"name"[1])\n"
+                    "        }\n"
+                }
+            } else {
+                name := unwrap(r.repeat.as)
+                code += link {
+                    "        _"name" := __"rule"(data: data, index: I, name: some(\""name"\"))\n"
+                    "        if is_err(_"name") {\n"
+                    "            break\n"
+                    "        } else {\n"
+                    "            i_"name" := unwrap(_"name")\n"
+                    "            I += i_"name"[0]\n"
+                    "            push(mut arr, i_"name"[1])\n"
+                    "        }\n"
+                }
+            }
+            code += link {
+                "    }\n"
+                "    if name != none() {\n"
+                "        I += end_node(data: data, index: I, name: unwrap(name))?\n"
+                "    }\n"
+                "    return ok([I - S, arr])\n"
+            }
+        }
+
+        if has(r, "select") {
+            rules := sift j {
+                rule := r.select[j].rule
+                as := r.select[j].as
+                if as != none() {
+                    code += link {"    _"rule" := __"rule
+                            "(data: data, index: I, name: some(\""unwrap(as)"\"))\n"}
+                } else {
+                    code += link {
+                        "    _"rule" := __"rule"(data: data, index: I, name: none())\n"
+                    }
+                }
+                code += link {
+                    "    if is_ok(_"rule") {\n"
+                    "        i_"rule" := unwrap(_"rule")\n"
+                    "        I += i_"rule"[0]\n"
+                    "        if name != none() {\n"
+                    "            I += end_node(data: data, index: I, name: unwrap(name))?\n"
+                    "        }\n"
+                    "        return ok([I - S, i_"rule"[1]])\n"
+                    "    }\n"
+                }
+                clone(rule)
+            }
+
+            code += "    return err(\"Expected one of "
+            for i {
+                code += link {"`"rules[i]"`"}
+                if (i + 1) < len(rules) {
+                    code += ", "
+                }
+            }
+            code += "\")?\n"
+        }
+
+        code += "}\n\n"
+    }
+
+    code += link {
+        "fn convert(data) -> res {\n"
+        "    I := 0\n"
+        "    r := __"meta.start"(data: data, index: I, name: none())?\n"
+        "    return ok(r[1])\n"
+        "}\n\n"
+        "fn meta__in_string(name: str, txt: str) -> res[[]] {\n"
+        "    syntax := syntax(in: \"syntax.txt\", string: syntax())?\n"
+        "    return meta(syntax: syntax, in: name, string: txt)\n"
+        "}\n\n"
+        "fn meta__file(file: str) -> res[[]] {\n"
+        "    return meta(in: file, string: load_string(file: file)?)\n"
+        "}\n\n"
+        "fn convert__in_string(name: str, txt: str) -> res {\n"
+        "    meta := meta(in: name, string: txt)?\n"
+        "    return convert(meta)\n"
+        "}\n\n"
+        "fn convert__file(file: str) -> res {\n"
+        "    txt := load_string(file: file)?\n"
+        "    return convert(in: file, string: txt)\n"
+        "}\n\n"
+        "syntax() = "json_string(syntax)"\n\n"
+    }
+
+    return ok(code)
+}

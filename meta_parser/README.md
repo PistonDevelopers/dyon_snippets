@@ -2,7 +2,17 @@
 
 Generates standalone parsers (no dependencies) in Dyon using a [Piston-Meta](https://github.com/pistondevelopers/meta) document and a DSL document.
 
+### Self-Convert Rules
+
+The DSL describes itself:
+
 [Self-Convert](./src/self-convert.txt)
+
+During generating the code for a new parser,
+the Dyon data representing these self-convert rules are used to bootstrap the parser generator at runtime.
+With other words, it generates itself first, to reduce the amount of overall code.
+
+### Introduction
 
 The DSL (Domain Specific Language) describes how to convert meta-data into Dyon data.
 
@@ -41,7 +51,9 @@ meta_parser <=> (piston_meta x dsl)
 meta_parser : syntax x convert -> (text -> meta data, meta data -> data)
 ```
 
-Overview ("src/meta_parser.dyon"):
+### Overview
+
+"src/meta_parser.dyon":
 
 ```dyon
 // Generate parser.

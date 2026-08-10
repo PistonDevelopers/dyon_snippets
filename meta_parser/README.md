@@ -6,6 +6,18 @@ Piston-Meta is built into Dyon's standard library.
 
 This script ([src/meta_parser.dyon](./src/meta_parser.dyon)) can be used to generate a parser in Dyon for any language using Piston-Meta.
 
+#### FAQ: Wait! Does the DSL use Piston-Meta too? 😵‍💫
+
+Yes, the DSL uses Piston-Meta.
+In this meta-parser, Piston-Meta is used in multiple places,
+that can sometimes be hard to wrap your head around.
+If this makes your head spin, then do not worry:
+Meta-parsing is not for the faint of heart.
+You will figure it out, eventually.
+Just remember to take breaks once in a while,
+to not over-exhaust your mind,
+ideally with some physical exercise.
+
 ### Example
 
 Assume that you want to parse the following data:
@@ -244,7 +256,7 @@ meta_parser : syntax x convert -> (text -> meta data, meta data -> data)
 // Generate parser.
 fn gen_parser__meta_from_to(syntax_file: str, convert_file: str, output_file: str) -> res { ... }
 
-// The syntax of the DSL used to convert meta-data into Dyon data.
+// The Piston-Meta syntax of the DSL used to convert meta-data into Dyon data.
 fn syntax() -> str { ... }
 
 // Dyon data representing the rules for the parser generator.
@@ -256,3 +268,31 @@ fn self_meta() -> {} { ... }
 // Generates parser code.
 fn to_code__syntax_meta(syntax: str, meta: {}) -> res[str]
 ```
+
+The generated parser will have the following useful functions:
+
+```dyon
+/// Convert meta-data to data.
+fn convert(data) -> res { ... }
+
+/// Get meta-data from string.
+///
+/// The name you give it is used in error reports.
+fn meta__in_string(name: str, txt: str) -> res[[]] { ... }
+
+/// Get meta-data from file.
+fn meta__file(file: str) -> res[[]] { ... }
+
+/// Convert string to data.
+///
+/// The name you give it is used in error reports.
+fn convert__in_string(name: str, txt: str) -> res { ... }
+
+/// Convert file to data.
+fn convert__file(file: str) -> res { ... }
+
+/// Returns the Piston-Meta syntax used by the parser.
+fn syntax() -> str { ... }
+```
+
+There are some other functions too, but they are mostly used internally by the parser.

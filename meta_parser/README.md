@@ -8,18 +8,54 @@ This script ([src/meta_parser.dyon](./src/meta_parser.dyon)) can be used to gene
 
 ### Example
 
-First, using a loader script to add "meta_parser.dyon":
+Assume that you want to parse the following data:
 
+```text
+0 1 2
+3 4 5
+6 7 8
+9 10
+```
+
+Each line consists of 2 or 3 numbers, separated by space.
+
+In Piston-Meta, we can describe this syntax as following:
+
+"syntax.txt"
+```text
+1 pos = [.w? .$_:"x" .w! .$_:"y" ?[.w! .$_:"z"] .w?]
+0 doc = .l(pos:"pos")
+```
+
+Now, we use the DSL to specify converter rules from meta-data to Dyon data:
+
+"convert.txt"
+```text
+meta {
+  pos := [x: f64, y: f64, z: opt[f64]]
+    => (x, y, if z == none() { 0 } else { unwrap(z) });
+  doc := repeat pos:"pos";
+  -----------------------
+  doc
+}
+```
+
+Next step is to write a Dyon script that generates a parser.
+
+First, using a loader script to add "meta_parser.dyon" in the context:
+
+"parser_loader.dyon"
 ```dyon
 fn main() {
     meta := unwrap(load("meta_parser.dyon"))
-    main := unwrap(load(source: "main.dyon", imports: [meta]))
+    main := unwrap(load(source: "parser_main.dyon", imports: [meta]))
     call(main, "main", [])
 }
 ```
 
 Next, generate the parser using "syntax.txt" (Piston-Meta format) and "convert.txt" (DSL):
 
+"parser_main.dyon"
 ```dyon
 fn main() {
     res := gen_parser(
@@ -34,6 +70,63 @@ fn main() {
     }
 }
 ```
+
+To run, type the following in the Terminal:
+
+```text
+dyonrun parser_loader.dyon
+```
+
+**Notice:** If you do not have `dyonrun` installed, you can install it using:
+
+```
+cargo install --example dyonrun dyon
+```
+
+Now, write a loader script to put the generated parser in the context:
+
+"loader.dyon"
+```dyon
+fn main() {
+    m := unwrap(load("output.dyon"))
+    main := unwrap(load(source: "main.dyon", imports: [m]))
+    call(main, "main", [])
+}
+```
+
+Finally, the main script:
+
+```dyon
+fn main() {
+    println(convert(file: "data.txt"))
+}
+```
+
+To run the main script:
+
+```text
+dyonrun loader.dyon
+```
+
+This should print:
+
+```text
+ok([(0, 1, 2), (3, 4, 5), (6, 7, 8), (9, 10)])
+```
+
+### Rules
+
+The DSL is a text document with a "meta" root node:
+
+```text
+meta {
+   <rules>
+   ----------
+   <start>
+}
+```
+
+The start specifies which rule to use for the whole document.
 
 ### Self-Convert Rules
 

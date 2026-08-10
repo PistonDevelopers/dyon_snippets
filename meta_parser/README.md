@@ -1,6 +1,39 @@
 # Meta-Parser
 
-Generates standalone parsers (no dependencies) in Dyon using a [Piston-Meta](https://github.com/pistondevelopers/meta) document and a DSL document.
+Generates standalone parsers (no dependencies) in Dyon using a [Piston-Meta](https://github.com/pistondevelopers/meta) document and a DSL (Domain Specific Language) document.
+
+Piston-Meta is built into Dyon's standard library.
+
+This script ([src/meta_parser.dyon](./src/meta_parser.dyon)) can be used to generate a parser in Dyon for any language using Piston-Meta.
+
+### Example
+
+First, using a loader script to add "meta_parser.dyon":
+
+```dyon
+fn main() {
+    meta := unwrap(load("meta_parser.dyon"))
+    main := unwrap(load(source: "main.dyon", imports: [meta]))
+    call(main, "main", [])
+}
+```
+
+Next, generate the parser using "syntax.txt" (Piston-Meta format) and "convert.txt" (DSL):
+
+```dyon
+fn main() {
+    res := gen_parser(
+        meta: "syntax.txt",
+        from: "convert.txt",
+        to: "parser.dyon"
+    )
+    if is_err(res) {
+        eprintln("ERROR:")
+        eprintln(unwrap_err(res))
+        return
+    }
+}
+```
 
 ### Self-Convert Rules
 
@@ -14,7 +47,7 @@ With other words, it generates itself first, to reduce the amount of overall cod
 
 ### Introduction
 
-The DSL (Domain Specific Language) describes how to convert meta-data into Dyon data.
+The DSL describes how to convert meta-data into Dyon data.
 
 Remember that Piston-Meta breaks up parsing into two steps:
 

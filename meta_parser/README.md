@@ -128,6 +128,52 @@ meta {
 
 The start specifies which rule to use for the whole document.
 
+Remember that Piston-Meta outputs an array meta-data:
+
+```rust
+pub enum MetaData {
+    StartNode(Arc<String>),
+    EndNode(Arc<String>),
+    Bool(Arc<String>, bool),
+    F64(Arc<String>, f64),
+    String(Arc<String>, Arc<String>),
+}
+```
+
+The rules specify how to match against meta-data and output Dyon data.
+
+#### Subrule
+
+A subrule is referenced by its name:
+
+```text
+<rule name>
+```
+
+If meta-data generates a node name, you can specify it as a string after the name of the subrule:
+
+```text
+<rule name>:"<meta data node name>"
+```
+
+#### Set Rule
+
+```text
+<name> := [<patterns>] => <code>;
+```
+
+#### Select Rule
+
+```text
+<name> := select {<subrules>};
+```
+
+#### Repeat Rule
+
+```text
+<name> := repeat <subrule>;
+```
+
 ### Self-Convert Rules
 
 The DSL describes itself:

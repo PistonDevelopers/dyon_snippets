@@ -50,17 +50,17 @@ fn end_node__data_index_name(data: [[]], index: f64, name: str) -> opt[f64] {
     }
 }
 
-/// Ignores meta data until end of node is reached.
+/// Ignores next logical item in meta data, until end of node is reached.
 fn ignore__data_index(data: [[]], index: f64) -> f64 {
     level := 0
-    i := index
     for i [index, len(data)) {
         if data[i][2] == "start" {
             level += 1
         } else if data[i][2] == "end" {
             if level == 0 { return i - index }
             level -= 1
-        }
+            if level == 0 { return i - index + 1 }
+        } else if level == 0 { return i - index + 1 }
     }
     return len(data) - index
 }

@@ -140,7 +140,7 @@ meta {
 
 The start specifies which rule to use for the whole document.
 
-Remember that Piston-Meta outputs an array meta-data:
+Remember that Piston-Meta outputs an array of meta-data:
 
 ```rust
 pub enum MetaData {

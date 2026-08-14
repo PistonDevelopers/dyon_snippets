@@ -177,15 +177,15 @@ If meta-data generates a node name, you can specify it as a string after the nam
 <name> := [<patterns>] => <code>;
 ```
 
-Here a pattern can be:
+The code to the right of `=>` is Dyon code.
+This code can depend on the variables bound by names.
+
+Here is what a pattern can be:
 
 - `<name>: bool` or `<name>: opt[bool]` (optional)
 - `<name>: f64` or `<name>: opt[f64]` (optional)
 - `<name>: str` or `<name>: opt[str]` (optional)
-- `<name> <- <subrule>` (see [Subrule](#subrule))
-
-The code to the right of `=>` is Dyon code.
-This code can depend on the variables bound by names.
+- `<name> <- <subrule>` or `<name> <-? <subrule>` (optional) (see [Subrule](#subrule))
 
 #### Select Rule
 

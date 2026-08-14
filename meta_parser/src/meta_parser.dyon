@@ -13,7 +13,7 @@ fn gen_parser__meta_from_to(
     return save(string: str(code), file: output_file)
 }
 
-syntax() = "_seps:\".:;,[]{}()?!=<>\\\"\"\n\n1 , = [.w? \",\" .w?]\n\n2 expr = {.t!:\"code\" ...\";\"!:\"code\"}\n3 reserved = [!\"I\" !\"S\"]\n\n95 ref = [.._seps!:\"rule\" ?[.w? \":\" .t!:\"as\"]]\n96 type = {\n    \"bool\":\"bool\"\n    \"f64\":\"f64\"\n    \"str\":\"str\"\n    [\"opt\":\"opt\" .w? \"[\" .w? type .w? \"]\"]\n}\n97 field = [reserved .._seps!:\"name\" .w?\n            {[\":\" .w? type] [\"<-\" ?\"?\":\"opt\" .w? ref]}]\n\n98 fields = [\"[\" .w? .s!.(, field:\"field\") .w? \"]\" .w?\n             \"=>\" .w? expr:\"expr\" \";\"]\n99 repeat = [\"repeat\" .w! ref .w? \";\"]\n100 select = [\"select\" .w? \"{\" .w? .s!.(, ref:\"ref\") .w? \"}\" .w? \";\"]\n\n150 rule = {fields:\"fields\" repeat:\"repeat\" select:\"select\"}\n200 decl = [.._seps!:\"name\" .w? \":=\" .w? rule:\"rule\" .w?]\n300 decls = .l(decl:\"decl\")\n1000 body = [.w? decls:\"rules\" .w?\n            \"--\" .r!(\"-\") .w? .._seps!:\"start\" .w?]\n2000 meta = [.w? \"meta\" .w? \"{\" .w?\n             body .w? \"}\" .w?]\n\n"
+syntax() = "_seps:\".:;,[]{}()?!=<>\\\"\"\n\n1 , = [.w? \",\" .w?]\n\n2 expr = {.t!:\"code\" ...\";\"!:\"code\"}\n3 reserved = [!\"I\" !\"S\"]\n\n95 ref = [.._seps!:\"rule\" ?[.w? \":\" .t!:\"as\"]]\n96 type = {\n    \"bool\":\"bool\"\n    \"f64\":\"f64\"\n    \"str\":\"str\"\n    [\"opt\":\"opt\" .w? \"[\" .w? type .w? \"]\"]\n}\n97 field = [reserved ?[.t?:\"old_name\" .w! \"=>\" .w!] .._seps!:\"name\" .w?\n            {[\":\" .w? type] [\"<-\" ?\"?\":\"opt\" .w? ref]}]\n\n98 fields = [\"[\" .w? .s!.(, field:\"field\") .w? \"]\" .w?\n             \"=>\" .w? expr:\"expr\" \";\"]\n99 repeat = [\"repeat\" .w! ref .w? \";\"]\n100 select = [\"select\" .w? \"{\" .w? .s!.(, ref:\"ref\") .w? \"}\" .w? \";\"]\n\n150 rule = {fields:\"fields\" repeat:\"repeat\" select:\"select\"}\n200 decl = [.._seps!:\"name\" .w? \":=\" .w? rule:\"rule\" .w?]\n300 decls = .l(decl:\"decl\")\n1000 body = [.w? decls:\"rules\" .w?\n            \"--\" .r!(\"-\") .w? .._seps!:\"start\" .w?]\n2000 meta = [.w? \"meta\" .w? \"{\" .w?\n             body .w? \"}\" .w?]\n\n"
 generator() = module(
     in: "meta_generator.dyon",
     string: str(to_code(syntax: syntax(), meta: self_meta())?),
@@ -71,11 +71,12 @@ self_meta() = {
         },
         {
             expr: "if tr.op == \"type\" {
-                {name: name, type: tr.val, optional: tr.optional}
+                {name: name, from: unwrap_or(old_name, name), type: tr.val, optional: tr.optional}
             } else {
                 {name: name, ref: {rule: tr.rule, as: tr.as}, optional: tr.optional}
             }",
             fields: [
+                {type: "str", optional: true, name: "old_name"},
                 {type: "str", optional: false, name: "name"},
                 {
                     ref: {as: none(), rule: "type_or_ref"},
@@ -279,7 +280,8 @@ fn to_code__syntax_meta(syntax: str, meta: {}) -> res[str] {
                     if has(fields[i], "type") {some(fields[i].type)} else {none()},
                     if has(fields[i], "ref") {some(fields[i].ref.rule)} else {none()},
                     if has(fields[i], "ref") {fields[i].ref.as} else {none()},
-                    if has(fields[i], "optional") {fields[i].optional} else {false}
+                    if has(fields[i], "optional") {fields[i].optional} else {false},
+                    if has(fields[i], "from") {fields[i].from} else {fields[i].name},
                 ]
             }
             for i len(gen_fields) {
@@ -302,6 +304,7 @@ fn to_code__syntax_meta(syntax: str, meta: {}) -> res[str] {
                 ty := gen_fields[i][1]
                 rule := gen_fields[i][2]
                 as := gen_fields[i][3]
+                from := gen_fields[i][5]
                 code += link {"        i_"name" := "}
                 if rule != none() {
                     code += link {"__"unwrap(rule)"(data: data, index: I, name: "}
@@ -312,7 +315,7 @@ fn to_code__syntax_meta(syntax: str, meta: {}) -> res[str] {
                     }
                 } else {
                     code += link {"read_"unwrap(ty)
-                        "(data: data, index: I, name: \""name"\")\n"}
+                        "(data: data, index: I, name: \""from"\")\n"}
                 }
                 if rule != none() {
                     code += link {"        if !is_err(i_"name") {\n"}

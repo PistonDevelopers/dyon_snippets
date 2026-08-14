@@ -8,9 +8,9 @@ meta {
     ref := [opt: opt[bool], rule: str, as: opt[str]]
         => {op: "ref", rule: rule, as: as, optional: opt == some(true)};
     type_or_ref := select {type, ref};
-    field := [name: str, tr <- type_or_ref]
+    field := [old_name: opt[str], name: str, tr <- type_or_ref]
         => if tr.op == "type" {
-            {name: name, type: tr.val, optional: tr.optional}
+            {name: name, from: unwrap_or(old_name, name), type: tr.val, optional: tr.optional}
         } else {
             {name: name, ref: {rule: tr.rule, as: tr.as}, optional: tr.optional}
         };

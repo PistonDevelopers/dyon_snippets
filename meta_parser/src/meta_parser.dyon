@@ -73,7 +73,7 @@ self_meta() = {
             expr: "if tr.op == \"type\" {
                 {name: name, type: tr.val, optional: tr.optional}
             } else {
-                {name: name, ref: {rule: tr.rule, as: tr.as}}
+                {name: name, ref: {rule: tr.rule, as: tr.as}, optional: tr.optional}
             }",
             fields: [
                 {type: "str", optional: false, name: "name"},

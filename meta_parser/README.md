@@ -100,7 +100,7 @@ Now, write a loader script to put the generated parser in the context:
 "loader.dyon"
 ```dyon
 fn main() {
-    m := unwrap(load("output.dyon"))
+    m := unwrap(load("parser.dyon"))
     main := unwrap(load(source: "main.dyon", imports: [m]))
     call(main, "main", [])
 }

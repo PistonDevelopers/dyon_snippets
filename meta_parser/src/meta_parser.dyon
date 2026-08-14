@@ -13,7 +13,7 @@ fn gen_parser__meta_from_to(
     return save(string: str(code), file: output_file)
 }
 
-syntax() = "_seps:\".:;,[]{}()?!=<>\\\"\"\n\n1 , = [.w? \",\" .w?]\n\n2 expr = {.t!:\"code\" ...\";\"!:\"code\"}\n3 reserved = [!\"I\" !\"S\"]\n\n95 ref = [.._seps!:\"rule\" ?[.w? \":\" .t!:\"as\"]]\n96 type = {\n    \"bool\":\"bool\"\n    \"f64\":\"f64\"\n    \"str\":\"str\"\n    [\"opt\":\"opt\" .w? \"[\" .w? type .w? \"]\"]\n}\n97 field = [reserved .._seps!:\"name\" .w?\n            {[\":\" .w? type] [\"<-\" .w? ref]}]\n\n98 fields = [\"[\" .w? .s!.(, field:\"field\") .w? \"]\" .w?\n             \"=>\" .w? expr:\"expr\" \";\"]\n99 repeat = [\"repeat\" .w! ref .w? \";\"]\n100 select = [\"select\" .w? \"{\" .w? .s!.(, ref:\"ref\") .w? \"}\" .w? \";\"]\n\n150 rule = {fields:\"fields\" repeat:\"repeat\" select:\"select\"}\n200 decl = [.._seps!:\"name\" .w? \":=\" .w? rule:\"rule\" .w?]\n300 decls = .l(decl:\"decl\")\n1000 body = [.w? decls:\"rules\" .w?\n            \"--\" .r!(\"-\") .w? .._seps!:\"start\" .w?]\n2000 meta = [.w? \"meta\" .w? \"{\" .w?\n             body .w? \"}\" .w?]\n"
+syntax() = "_seps:\".:;,[]{}()?!=<>\\\"\"\n\n1 , = [.w? \",\" .w?]\n\n2 expr = {.t!:\"code\" ...\";\"!:\"code\"}\n3 reserved = [!\"I\" !\"S\"]\n\n95 ref = [.._seps!:\"rule\" ?[.w? \":\" .t!:\"as\"]]\n96 type = {\n    \"bool\":\"bool\"\n    \"f64\":\"f64\"\n    \"str\":\"str\"\n    [\"opt\":\"opt\" .w? \"[\" .w? type .w? \"]\"]\n}\n97 field = [reserved .._seps!:\"name\" .w?\n            {[\":\" .w? type] [\"<-\" ?\"?\":\"opt\" .w? ref]}]\n\n98 fields = [\"[\" .w? .s!.(, field:\"field\") .w? \"]\" .w?\n             \"=>\" .w? expr:\"expr\" \";\"]\n99 repeat = [\"repeat\" .w! ref .w? \";\"]\n100 select = [\"select\" .w? \"{\" .w? .s!.(, ref:\"ref\") .w? \"}\" .w? \";\"]\n\n150 rule = {fields:\"fields\" repeat:\"repeat\" select:\"select\"}\n200 decl = [.._seps!:\"name\" .w? \":=\" .w? rule:\"rule\" .w?]\n300 decls = .l(decl:\"decl\")\n1000 body = [.w? decls:\"rules\" .w?\n            \"--\" .r!(\"-\") .w? .._seps!:\"start\" .w?]\n2000 meta = [.w? \"meta\" .w? \"{\" .w?\n             body .w? \"}\" .w?]\n\n"
 generator() = module(
     in: "meta_generator.dyon",
     string: str(to_code(syntax: syntax(), meta: self_meta())?),
@@ -54,8 +54,9 @@ self_meta() = {
             name: "type"
         },
         {
-            expr: "{op: \"ref\", rule: rule, as: as}",
+            expr: "{op: \"ref\", rule: rule, as: as, optional: opt == some(true)}",
             fields: [
+                {type: "bool", optional: true, name: "opt"},
                 {type: "str", optional: false, name: "rule"},
                 {type: "str", optional: true, name: "as"}
             ],

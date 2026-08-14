@@ -5,8 +5,8 @@ meta {
     ty := select {f64, str, bool};
     type := [opt: opt[bool], ty <- ty]
         => {op: "type", val: ty, optional: opt == some(true)};
-    ref := [rule: str, as: opt[str]]
-        => {op: "ref", rule: rule, as: as};
+    ref := [opt: opt[bool], rule: str, as: opt[str]]
+        => {op: "ref", rule: rule, as: as, optional: opt == some(true)};
     type_or_ref := select {type, ref};
     field := [name: str, tr <- type_or_ref]
         => if tr.op == "type" {

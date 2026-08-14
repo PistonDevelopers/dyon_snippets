@@ -187,6 +187,10 @@ Here is what a pattern can be:
 - `<name>: str` or `<name>: opt[str]` (optional)
 - `<name> <- <subrule>` or `<name> <-? <subrule>` (optional) (see [Subrule](#subrule))
 
+To map a field name, you add `"<old_name>" =>` in front of the pattern.
+
+For example, `"+" => plus: bool`.
+
 #### Select Rule
 
 ```text
